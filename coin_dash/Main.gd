@@ -77,6 +77,6 @@ func game_over():
 	playing = false
 	$GameTimer.stop()
 	for coin in $CoinContainer.get_children():
-		coin.free_queue()
+		coin.queue_free()
 	$HUD.show_game_over()
 	$Player.die()

@@ -31,5 +31,7 @@ position = Vector2( 240, 350 )
 
 [node name="HUD" parent="." instance=ExtResource( 5 )]
 
+[connection signal="hurt" from="Player" to="." method="_on_Player_hurt"]
+[connection signal="pickup" from="Player" to="." method="_on_Player_pickup"]
 [connection signal="timeout" from="GameTimer" to="." method="_on_GameTimer_timeout"]
 [connection signal="start_game" from="HUD" to="." method="new_game"]
