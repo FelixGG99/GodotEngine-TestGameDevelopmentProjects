@@ -5,7 +5,8 @@ var screensize
 # If coin gets picked up, play pick-up tween
 func pickup():
 	# Prevent from emitting signals to avoid calling pickup() while tween is playing
-	monitoring = false
+	# Monitoreable: propoerty of Area node that determines if other areas can detect it
+	monitorable = false
 	# Start tween, make coin increase size and fade
 	$Tween.start()
 	
