@@ -52,6 +52,8 @@ func check_for_next_level():
 	if $CoinContainer.get_child_count() == 0:
 		level += 1
 		time_left += 5
+		# Play Next Level sound
+		$NextLevelSound.play()
 		spawn_coins()
 		
 func _process(delta):
@@ -60,23 +62,39 @@ func _process(delta):
 		# Check if player advances to next level
 		check_for_next_level()
 	
+# Callback function reacting to Player's pickup signal
 func _on_Player_pickup():
+	# Play coin pickup sound
+	$PickupCoinSound.play()
+	# Increase Score and update HUD counter
 	score += 1
 	$HUD.update_score(score)
-	
+
+# Callback function reacting to Player's hurt signal	
 func _on_Player_hurt():
 	game_over()
 
+# Callback function reacting to GameTimer's timeout signal
 func _on_GameTimer_timeout():
+	# Decrease time_left and update HUD timer
 	time_left -= 1
 	$HUD.update_timer(time_left)
+	# If time_left reaches zero, end game
 	if time_left <= 0:
 		game_over()
 
+# End game and show game over screen
 func game_over():
+	# Play end sound
+	$EndSound.play()
+	# Set playing flag to false
 	playing = false
+	# Stop GameTimer
 	$GameTimer.stop()
+	# Delete every coin instance
 	for coin in $CoinContainer.get_children():
 		coin.queue_free()
+	# Show Game Over message
 	$HUD.show_game_over()
+	# Play player dying animation
 	$Player.die()
