@@ -1,9 +1,10 @@
 extends Node
 
 # Variables set up from the Inspector tab for the Main node
-export (PackedScene) var Coin	# Coin scene object to be able to instace in code
-export (PackedScene) var Cactus	# Cactus scene object to be able to instace in code
-export (int) var playtime		# Duration of the round
+export (PackedScene) var Coin	 # Coin scene object to be able to instace in code
+export (PackedScene) var Cactus	 # Cactus scene object to be able to instace in code
+export (PackedScene) var Powerup # Cactus scene object to be able to instace in code
+export (int) var playtime		 # Duration of the round
 
 # Node Variables
 var level
@@ -73,14 +74,22 @@ func new_game():
 func check_for_next_level():
 	# If no coins left in container, advance to the next level, increase time and spawn coins
 	if $CoinContainer.get_child_count() == 0:
+		# Set playing = false for cactus spawning validations (see _check_cactus_not_spawned_in_Player(area))
 		playing = false
 		clear_cactus()
 		spawn_cactus()
 		spawn_coins()
+		
+		# Set timer to spawn powerup
+		$PowerupTimer.wait_time = rand_range(5, 10);
+		$PowerupTimer.start()
+		
+		# Increase level, time_left and play next level sound
 		level += 1
 		time_left += max(5, min(level, 10))
-		# Play Next Level sound
 		$NextLevelSound.play()
+		
+		# Set playing back to true
 		playing = true
 		
 func _process(delta):
@@ -89,13 +98,19 @@ func _process(delta):
 		# Check if player advances to next level
 		check_for_next_level()
 	
-# Callback function reacting to Player's pickup signal
-func _on_Player_pickup():
-	# Play coin pickup sound
-	$PickupCoinSound.play()
-	# Increase Score and update HUD counter
-	score += 1
-	$HUD.update_score(score)
+# Callback function reacting to Player's pickup signal. Takes type of object picked up
+func _on_Player_pickup(type):
+	# If object is coin, increase Score, update HUD counter and play coin sound
+	if type == "coin":
+		$PickupCoinSound.play()
+		score += 1
+		$HUD.update_score(score)
+	# If object is powerup, increase time, update HUD timer and play powerup sound
+	else: if type == "powerup":
+		$PowerupSound.play()
+		time_left += 5
+		$HUD.update_timer(time_left)
+		
 
 # Callback function reacting to Player's hurt signal	
 func _on_Player_hurt():
@@ -109,6 +124,12 @@ func _on_GameTimer_timeout():
 	# If time_left reaches zero, end game
 	if time_left <= 0:
 		game_over()
+
+func _on_PowerupTimer_timeout():
+	var pw = Powerup.instance()
+	add_child(pw)
+	pw.screensize = screensize
+	pw.position = Vector2(rand_range(0, screensize.x), rand_range(0, screensize.y))
 
 # End game and show game over screen
 func game_over():
@@ -136,3 +157,6 @@ func game_over():
 func _check_cactus_not_spawned_in_Player(area):
 	if playing == false and area.is_in_group("obstacles"):
 		area.position = Vector2(rand_range(0, screensize.x), rand_range(0, screensize.y))
+
+
+

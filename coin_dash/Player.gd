@@ -53,10 +53,15 @@ func _process(delta):
 # Determine what to do when another Area2D enters the player's area
 # Entering area is passed on as an argument
 func _on_Player_area_entered(area):
-	# If the colliding object is a coin, emit the pickup signal and call the coin's pickup method
+	# If colliding with coin, emit pickup signal with type "coin"
 	if area.is_in_group("coins"): 
 		area.pickup()
-		emit_signal("pickup")
-	if area.is_in_group("obstacles"): 
+		emit_signal("pickup", "coin")
+	# If colliding with powerup, emit pickup signal with type "powerup"
+	else: if area.is_in_group("powerups"):
+		area.pickup()
+		emit_signal("pickup", "powerup")
+	# If colliding with obstacle, emit hurt signal
+	else: if area.is_in_group("obstacles"): 
 		emit_signal("hurt")
 		die()
