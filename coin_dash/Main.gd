@@ -2,6 +2,7 @@ extends Node
 
 # Variables set up from the Inspector tab for the Main node
 export (PackedScene) var Coin	# Coin scene object to be able to instace in code
+export (PackedScene) var Cactus	# Cactus scene object to be able to instace in code
 export (int) var playtime		# Duration of the round
 
 # Node Variables
@@ -20,6 +21,22 @@ func _ready():
 	$Player.screensize = screensize
 	$Player.hide()
 
+# Spawn cactuses and store them in CactusCointainer
+func spawn_cactus():
+	# Spawn as many coins as the current level plus 4
+	for _i in range (min(level + 2, 15)):
+		# Instance a new coin and add it to CoinContainer
+		var new_cactus = Cactus.instance()
+		$CactusContainer.add_child(new_cactus)
+		# Set variable values for the new coin
+		new_cactus.position = Vector2(rand_range(0, screensize.x), rand_range(0, screensize.y))
+
+# Remove all cactuses from CactusCointainer
+func clear_cactus():
+	for cactus in $CactusContainer.get_children():
+		cactus.queue_free()
+
+# Spawn coins and store them in CoinCointainer
 func spawn_coins():
 	# Spawn as many coins as the current level plus 4
 	for _i in range (4 + level):
@@ -28,12 +45,16 @@ func spawn_coins():
 		$CoinContainer.add_child(new_coin)
 		# Set variable values for the new coin
 		new_coin.screensize = screensize
-		new_coin.position = Vector2(rand_range(0, screensize.x), rand_range(0, screensize.y))
+		new_coin.position = Vector2(rand_range(0, screensize.x), rand_range(0, screensize.y))		
+
+# Remove all coin
+func clear_coins():
+	for coin in $CoinContainer.get_children():
+		coin.queue_free()
 
 # Connected to the start_game signal (button pressing)
 func new_game():
 	# Set up game variables
-	playing = true
 	level = 1
 	score = 0
 	time_left = playtime
@@ -42,19 +63,25 @@ func new_game():
 	$Player.show()
 	# Start timer and coin instancing
 	$GameTimer.start()
+	spawn_cactus()
 	spawn_coins()
 	# Initialize score and timer
 	$HUD.update_score(score)
 	$HUD.update_timer(time_left)
+	playing = true
 	
 func check_for_next_level():
 	# If no coins left in container, advance to the next level, increase time and spawn coins
 	if $CoinContainer.get_child_count() == 0:
+		playing = false
+		clear_cactus()
+		spawn_cactus()
+		spawn_coins()
 		level += 1
-		time_left += 5
+		time_left += max(5, min(level, 10))
 		# Play Next Level sound
 		$NextLevelSound.play()
-		spawn_coins()
+		playing = true
 		
 func _process(delta):
 	# Update time and check for level completition IF the game has started
@@ -87,14 +114,25 @@ func _on_GameTimer_timeout():
 func game_over():
 	# Play end sound
 	$EndSound.play()
+	
 	# Set playing flag to false
 	playing = false
+	
 	# Stop GameTimer
 	$GameTimer.stop()
-	# Delete every coin instance
-	for coin in $CoinContainer.get_children():
-		coin.queue_free()
+	
+	# Delete every coin and cactus instance
+	clear_cactus()
+	clear_coins()
+	
 	# Show Game Over message
 	$HUD.show_game_over()
+	
 	# Play player dying animation
 	$Player.die()
+
+# When paused = true (start of the game, between levels), if Player detects a collision
+# and it is an obstacle, change the position of the obstacle
+func _check_cactus_not_spawned_in_Player(area):
+	if playing == false and area.is_in_group("obstacles"):
+		area.position = Vector2(rand_range(0, screensize.x), rand_range(0, screensize.y))

@@ -34,3 +34,8 @@ func _on_AnimationDelay_timeout():
 	# Start from frame 0 and play
 	$AnimatedSprite.frame = 0
 	$AnimatedSprite.play()
+
+# If spawned on a cactus, respawn in another place
+func _on_Coin_area_entered(area):
+	if area.is_in_group("obstacles"):
+		position = Vector2(rand_range(0, screensize.x), rand_range(0, screensize.y))
